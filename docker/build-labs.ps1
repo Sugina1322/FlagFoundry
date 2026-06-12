@@ -1,0 +1,9 @@
+docker build -t flagfoundry/kali:latest ./docker/kali
+docker build -t flagfoundry/linux-basic:latest ./docker/vulnerable/linux-basic
+docker build -t flagfoundry/webapp-dvwa:latest ./docker/vulnerable/webapp-dvwa
+docker build -t flagfoundry/privesc-box:latest ./docker/vulnerable/privesc-box
+docker build -t flagfoundry/metasploitable-lite:latest ./docker/vulnerable/metasploitable
+docker build -t flagfoundry/web-login-bypass:latest ./docker/vulnerable/web-login-bypass
+docker build -t flagfoundry/file-permissions:latest ./docker/vulnerable/file-permissions
+docker build -t flagfoundry/cron-misconfig:latest ./docker/vulnerable/cron-misconfig
+docker build -t flagfoundry/api-idor:latest ./docker/vulnerable/api-idor

@@ -1,0 +1,11 @@
+node_modules
+frontend/node_modules
+backend/node_modules
+frontend/dist
+backend/src/generated/prisma
+.git
+.env
+.env.*
+generated-vpn
+postgres-data
+*.log

@@ -1,0 +1,2 @@
+FLAG{web_stack_triple_threat}
+

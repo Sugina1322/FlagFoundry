@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../backend/src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+  INSANE
+}
+
+enum RoomType {
+  LINUX_FUNDAMENTALS
+  WEB_EXPLOITATION
+  PRIVILEGE_ESCALATION
+  CTF_CHALLENGE
+}
+
+enum InstanceStatus {
+  STARTING
+  RUNNING
+  STOPPED
+  ERROR
+}
+
+model User {
+  id             String             @id @default(cuid())
+  email          String             @unique
+  username       String             @unique
+  passwordHash   String
+  role           Role               @default(USER)
+  points         Int                @default(0)
+  streak         Int                @default(0)
+  lastActiveAt   DateTime?
+  vpnSubnet      String?            @unique
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  taskProgress   TaskProgress[]
+  roomProgress   RoomProgress[]
+  labInstances   LabInstance[]
+  flagSubmissions FlagSubmission[]
+  hintUnlocks    HintUnlock[]
+  writeups       Writeup[]
+}
+
+model LearningPath {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  title       String
+  description String
+  order       Int        @default(0)
+  rooms       Room[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Room {
+  id             String          @id @default(cuid())
+  slug           String          @unique
+  title          String
+  description    String
+  type           RoomType
+  difficulty     Difficulty
+  points         Int             @default(100)
+  dockerImage    String
+  internalHost   String          @default("target")
+  learningPathId String?
+  learningPath   LearningPath?   @relation(fields: [learningPathId], references: [id], onDelete: SetNull)
+  tasks          Task[]
+  flags          Flag[]
+  instances      LabInstance[]
+  progress       RoomProgress[]
+  writeups       Writeup[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Task {
+  id          String         @id @default(cuid())
+  roomId      String
+  room        Room           @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  title       String
+  body        String
+  order       Int
+  points      Int            @default(10)
+  hints       Hint[]
+  progress    TaskProgress[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model Hint {
+  id        String       @id @default(cuid())
+  taskId    String
+  task      Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  body      String
+  cost      Int          @default(5)
+  order     Int
+  unlocks   HintUnlock[]
+}
+
+model Flag {
+  id          String           @id @default(cuid())
+  roomId      String
+  room        Room             @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  label       String
+  valueHash   String
+  points      Int              @default(50)
+  submissions FlagSubmission[]
+}
+
+model LabInstance {
+  id             String         @id @default(cuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roomId         String
+  room           Room           @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  status         InstanceStatus @default(STARTING)
+  networkName    String
+  targetName     String?
+  kaliName       String?
+  targetIp       String?
+  kaliIp         String?
+  error          String?
+  startedAt      DateTime       @default(now())
+  stoppedAt      DateTime?
+  updatedAt      DateTime       @updatedAt
+
+  @@index([userId, roomId])
+}
+
+model RoomProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roomId      String
+  room        Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+
+  @@unique([userId, roomId])
+}
+
+model TaskProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taskId      String
+  task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+
+  @@unique([userId, taskId])
+}
+
+model FlagSubmission {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flagId    String
+  flag      Flag     @relation(fields: [flagId], references: [id], onDelete: Cascade)
+  value     String
+  correct   Boolean
+  createdAt DateTime @default(now())
+}
+
+model HintUnlock {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hintId    String
+  hint      Hint     @relation(fields: [hintId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, hintId])
+}
+
+model Writeup {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  approved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
